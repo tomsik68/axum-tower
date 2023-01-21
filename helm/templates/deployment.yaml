@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: axum-tower
+  labels:
+    app: axum-tower
+spec:
+  selector:
+    matchLabels:
+      app: axum-tower
+  template:
+    metadata:
+      labels:
+        app: axum-tower
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag}}
+        ports:
+          - containerPort: 8080
