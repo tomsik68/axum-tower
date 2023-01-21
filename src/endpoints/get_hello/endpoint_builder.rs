@@ -1,11 +1,4 @@
-
-
-
-
-
-
-
-
+use crate::http_route_populate::*;
 use tower::ServiceBuilder;
 
 use super::request::HelloRequestLayer;
@@ -24,6 +17,7 @@ pub fn build() -> impl crate::route_service_wrap::RouteServiceTrait {
     crate::route_service_wrap::RouteServiceWrap::builder()
         .inner(
             ServiceBuilder::new()
+                .layer(http_route_populate("/"))
                 .layer(HelloRequestLayer::default())
                 .service(HelloService::default()),
         )
