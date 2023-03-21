@@ -1,5 +1,7 @@
+use crate::configuration::Configuration;
 use crate::http_route_populate::*;
 use std::convert::Infallible;
+use std::sync::Arc;
 use tower::util::BoxCloneService;
 use tower::ServiceBuilder;
 
@@ -18,7 +20,9 @@ use axum::response::Response;
 /// the right services.
 ///
 /// Observe that we return an `impl` type to hide the module's implementation details.
-pub fn build() -> BoxCloneService<Request<Body>, Response, Infallible> {
+pub fn build(
+    configuration: Arc<Configuration>,
+) -> BoxCloneService<Request<Body>, Response, Infallible> {
     BoxCloneService::new(
         ServiceBuilder::new()
             .layer(http_route_populate("/"))

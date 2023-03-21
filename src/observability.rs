@@ -1,3 +1,4 @@
+use crate::configuration::Configuration;
 use axum::Router;
 use http::{
     header::{AsHeaderName, HeaderMap, USER_AGENT},
@@ -13,7 +14,8 @@ use tower_http::trace::{MakeSpan, OnResponse, TraceLayer};
 use tracing::Span;
 use uuid::Uuid;
 
-pub(crate) fn init_tracing() -> impl Any {
+/// This initializes tracing and returns a guard.
+pub(crate) fn init_tracing(config: &Configuration) -> impl Any {
     use opentelemetry_otlp::WithExportConfig;
     use tracing_subscriber::filter::LevelFilter;
     use tracing_subscriber::layer::SubscriberExt;
@@ -24,6 +26,7 @@ pub(crate) fn init_tracing() -> impl Any {
     let otlp_exporter = opentelemetry_otlp::new_exporter()
         .tonic()
         .with_endpoint("http://otlp-opentelemetry-collector:4317");
+
     // Then pass it into pipeline builder
     let tracer = opentelemetry_otlp::new_pipeline()
         .tracing()
@@ -45,7 +48,7 @@ pub(crate) fn init_tracing() -> impl Any {
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
 
     // Use the tracing subscriber `Registry`, or any other subscriber
-    // that impls `LookupSpan`
+    // that implements `LookupSpan`
     let subscriber = Registry::default()
         .with(telemetry)
         .with(
@@ -54,6 +57,7 @@ pub(crate) fn init_tracing() -> impl Any {
                 .from_env_lossy(),
         )
         .with(tracing_subscriber::fmt::layer());
+
     tracing::subscriber::set_global_default(subscriber).unwrap();
 }
 
@@ -127,8 +131,7 @@ trait HeaderValueForTracing {
 impl HeaderValueForTracing for HeaderMap {
     fn header_value_for_tracing<K: AsHeaderName>(&self, key: K) -> Option<String> {
         self.get(key)
-            .map(|v| v.to_str().map(ToString::to_string).ok())
-            .flatten()
+            .and_then(|v| v.to_str().map(ToString::to_string).ok())
     }
 }
 
