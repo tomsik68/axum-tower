@@ -1,8 +1,14 @@
 use crate::http_route_populate::*;
+use std::convert::Infallible;
+use tower::util::BoxCloneService;
 use tower::ServiceBuilder;
 
 use super::request::HelloRequestLayer;
 use super::service::HelloService;
+
+use axum::body::Body;
+use axum::http::Request;
+use axum::response::Response;
 
 /// This function takes all the layers that make up the endpoint and uses the ServiceBuilder to
 /// assemble them into a service in the right order.
@@ -12,14 +18,11 @@ use super::service::HelloService;
 /// the right services.
 ///
 /// Observe that we return an `impl` type to hide the module's implementation details.
-pub fn build() -> impl crate::route_service_wrap::RouteServiceTrait {
-    // Here, we wrap the service inside a structure called RouteServiceWrap.
-    crate::route_service_wrap::RouteServiceWrap::builder()
-        .inner(
-            ServiceBuilder::new()
-                .layer(http_route_populate("/"))
-                .layer(HelloRequestLayer::default())
-                .service(HelloService::default()),
-        )
-        .build()
+pub fn build() -> BoxCloneService<Request<Body>, Response, Infallible> {
+    BoxCloneService::new(
+        ServiceBuilder::new()
+            .layer(http_route_populate("/"))
+            .layer(HelloRequestLayer::default())
+            .service(HelloService::default()),
+    )
 }
